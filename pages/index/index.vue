@@ -1,28 +1,21 @@
 <template>
 	<view class="container">
 		<view class="top-container">
-			<picker class="picker" mode="date" :value="date" @change="bindDateChange">
-				<view class="uni-input">{{date}}</view>
-			</picker>
+			<view class="row">{{date}}</view>
 			<view class="row">
-				<input type="text" value="" />
-				<input type="number" value="" />
+				<!-- <input class="input" type="text" :value="action" @input="action = $event.detail.value" /> -->
+				<input class="input" type="number" :value="value" @input="value = $event.detail.value" placeholder="Fill in the number completed today" />
 			</view>
+			<button type="default" @tap="changeData">submit</button>
 		</view>
-
-		<view class="qiun-charts">
-			<canvas canvas-id="canvasLineA" id="canvasLineA" class="charts" @touchstart="touchLineA"></canvas>
-		</view>
+		<canvas class="charts" canvas-id="canvas-id" id="canvas-id" disable-scroll=true @touchstart="touchLine" @touchmove="moveLine"
+		 @touchend="touchEndLine"></canvas>
 	</view>
 </template>
 
 <script>
 	import uCharts from '@/js_sdk/u-charts/u-charts/u-charts.min.js'
 
-	// import  { isJSON } from '@/common/checker.js';
-
-	var _self;
-	var canvaLineA = null;
 	export default {
 		components: {},
 		data() {
@@ -33,163 +26,108 @@
 				let day = date.getDate()
 				month = month > 9 ? month : '0' + month
 				day = day > 9 ? day : '0' + day
-				return `${year}-${month}-${day}`
+				return `${month}-${day}`
 			}
 			return {
-				date: getDate(),
+				// date: getDate(),
+				date: '05-28',
+				action: '',
+				value: '',
 
-
-				pixelRatio: 1,
+				chartsData: this.$.getData('chartsData') || {
+					categories: [],
+					series: [{
+						name: 'action',
+						data: [],
+					}]
+				}
 			}
 		},
 		onLoad() {
-			_self = this;
-
-			this.cWidth = uni.upx2px(750);
-			this.cHeight = uni.upx2px(500);
-			this.getServerData();
+			this.initCharts()
 		},
 		methods: {
 			bindDateChange(e) {
 				this.date = e.target.value
 			},
-			getServerData() {
-				let res = {}
-				res.data = {
-					"success": true,
-					"data": {
-
-						"LineA": {
-							"categories": ["2012", "2013", "2014", "2015", "2016", "2017"],
-							"series": [{
-								"name": "成交量A",
-								"data": [35, 8, 25, 37, 4, 20]
-							}, {
-								"name": "成交量B",
-								"data": [70, 40, 65, 100, 44, 68]
-							}, {
-								"name": "成交量C",
-								"data": [100, 80, 95, 150, 112, 132]
-							}, {
-								"name": "成交量C",
-								"data": [100, 80, 95, 150, 112, 132]
-							}, {
-								"name": "成交量C",
-								"data": [100, 80, 95, 150, 112, 132]
-							}, {
-								"name": "成交量C222",
-								"data": [100, 80, 95, 150, 112, 162]
-							}]
-						},
-					}
-				}
-				let LineA = {
-					categories: [],
-					series: []
-				};
-				//这里我后台返回的是数组，所以用等于，如果您后台返回的是单条数据，需要push进去
-				LineA.categories = res.data.data.LineA.categories;
-				LineA.series = res.data.data.LineA.series;
-				_self.showLineA("canvasLineA", LineA);
-
-			},
-			showLineA(canvasId, chartData) {
-				canvaLineA = new uCharts({
-					$this: _self,// this实例组件内使用图表，必须传入this实例
-					canvasId: canvasId,//页面组件canvas-id，支付宝中为id
+			initCharts() {
+				this.charts = new uCharts({
+					$this: this, // this实例组件内使用图表，必须传入this实例
+					canvasId: 'canvas-id', //页面组件canvas-id，支付宝中为id
 					type: 'line',
 					fontSize: 11,
-					padding: [15, 20, 20, 15],
+					padding: [20, 20, 20, 20],
 					legend: {
 						show: true,
 						padding: 5,
 						lineHeight: 11,
-						margin: 0,
+						margin: 5,
 					},
 					dataLabel: true,
 					dataPointShape: true,
 					background: '#FFFFFF',
-					pixelRatio: _self.pixelRatio,
-					categories: chartData.categories,
-					series: chartData.series,
+					pixelRatio: 1,
+					categories: this.chartsData.categories,
+					series: this.chartsData.series,
 					animation: true,
+					enableScroll: true,
 					xAxis: {
 						type: 'grid',
 						gridColor: '#CCCCCC',
 						gridType: 'dash',
 						dashLength: 8,
-						boundaryGap: 'justify'
+						boundaryGap: 'center',
+						rotateLabel: true,
+
+						itemCount: 5, //x轴单屏显示数据的数量，默认为5个
+						scrollShow: true, //新增是否显示滚动条，默认false
+						scrollAlign: 'left', //滚动条初始位置
+						scrollBackgroundColor: '#F7F7FF', //默认为 #EFEBEF
+						scrollColor: '#DEE7F7', //默认为 #A6A6A6
 					},
 					yAxis: {
 						gridType: 'dash',
 						gridColor: '#CCCCCC',
 						dashLength: 8,
 						splitNumber: 5,
-						format: (val) => {
-							return val.toFixed(0) + '元'
-						}
 					},
-					width: _self.cWidth * _self.pixelRatio,
-					height: _self.cHeight * _self.pixelRatio,
+					width: uni.upx2px(750),
+					height: uni.upx2px(500),
 					extra: {
 						line: {
 							type: 'curve'
 						}
 					}
 				});
-				//下面是默认选中索引
-				let cindex = 3;
-				//下面是自定义文案
-				let textList = [{
-					text: '我是一个标题',
-					color: null
-				}, {
-					text: '自定义1：值1',
-					color: '#2fc25b'
-				}, {
-					text: '自定义2：值2',
-					color: '#facc14'
-				}, {
-					text: '自定义3：值3',
-					color: '#f04864'
-				}];
-				//下面是event的模拟,tooltip的Y坐标值通过这个mp.changedTouches[0].y控制
-				let tmpevent = {
-					mp: {
-						changedTouches: [{
-							x: 0,
-							y: 80
-						}]
-					}
-				};
-				// setTimeout(() => {
-				// 	canvaLineA.showToolTip(tmpevent, {
-				// 		index: cindex,
-				// 		textList: textList
-				// 	});
-				// }, 200)
+
 			},
-			touchLineA(e) {
-				// canvaLineA.touchLegend(e);
-				// canvaLineA.showToolTip(e, {
-				// 	format: function(item, category) {
-				// 		return category + ' ' + item.name + ':' + item.data
-				// 	}
-				// });
+			touchLine(e) {
+				this.charts.scrollStart(e);
+			},
+			moveLine(e) {
+				this.charts.scroll(e);
+			},
+			touchEndLine(e) {
+				this.charts.scrollEnd(e);
+				//下面是toolTip事件，如果滚动后不需要显示，可不填写
+				this.charts.touchLegend(e);
+				this.charts.showToolTip(e, {
+					format: function(item, category) {
+						return category + ' ' + item.name + ':' + item.data
+					}
+				});
 			},
 			changeData() {
-				if (isJSON(_self.textarea)) {
-					let newdata = JSON.parse(_self.textarea);
-					canvaLineA.updateData({
-						series: newdata.series,
-						categories: newdata.categories
-					});
+				// 修改chartsData
+				if (this.chartsData.categories[this.chartsData.categories.length - 1] == this.date) {
+					this.chartsData.series[0].data[this.chartsData.series[0].data.length - 1] = this.value
 				} else {
-					uni.showToast({
-						title: '数据格式错误',
-						image: '../../../static/images/alert-warning.png'
-					})
+					this.chartsData.categories.push(this.date)
+					this.chartsData.series[0].data.push(this.value)
 				}
+				
+				this.charts.updateData(this.chartsData)
+				this.$.setData('chartsData', this.chartsData)
 			}
 		}
 	}
@@ -209,16 +147,25 @@
 				padding: 10rpx;
 				border-radius: 10rpx;
 				color: #fff;
+				margin: 20rpx;
+			}
+
+			.row {
+				justify-content: center;
+				margin: 20rpx;
+				display: flex;
+
+				.input {
+					width: 100%;
+					margin: 10rpx;
+					border: 1px solid #efefef;
+					border-radius: 10rpx;
+					padding: 10rpx 20rpx;
+				}
 			}
 		}
 
 		.charts {
-			width: 750upx;
-			height: 500upx;
-			background-color: #FFFFFF;
-		}
-
-		.qiun-charts {
 			width: 750upx;
 			height: 500upx;
 			background-color: #FFFFFF;

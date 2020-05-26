@@ -5,6 +5,9 @@ Vue.config.productionTip = false
 
 App.mpType = 'app'
 
+import utils from '@/lib/js/utils'
+Vue.prototype.$ = utils
+
 const app = new Vue({
 	...App
 })
