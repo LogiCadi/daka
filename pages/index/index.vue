@@ -29,8 +29,8 @@
 				return `${month}-${day}`
 			}
 			return {
-				// date: getDate(),
-				date: '05-28',
+				date: getDate(),
+				// date: '05-28',
 				action: '',
 				value: '',
 
@@ -120,11 +120,11 @@
 			changeData() {
 				// 修改chartsData
 				if (this.chartsData.categories[this.chartsData.categories.length - 1] == this.date) {
-					this.chartsData.series[0].data[this.chartsData.series[0].data.length - 1] = this.value
+					this.chartsData.series[0].data[this.chartsData.series[0].data.length - 1] = parseInt(this.value)
 				} else {
 					this.chartsData.categories.push(this.date)
-					this.chartsData.series[0].data.push(this.value)
-				}
+					this.chartsData.series[0].data.push(parseInt(this.value))
+				} 
 				
 				this.charts.updateData(this.chartsData)
 				this.$.setData('chartsData', this.chartsData)
